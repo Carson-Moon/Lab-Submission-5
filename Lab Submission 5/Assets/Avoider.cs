@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Schema;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 public class Avoider : MonoBehaviour
@@ -8,12 +10,17 @@ public class Avoider : MonoBehaviour
 
     private void Start()
     {
-        PoissonDiscSampler sampler = new PoissonDiscSampler(10, 5, .5f);
+        PoissonDiscSampler sampler = new PoissonDiscSampler(10, 10, 1f);
 
         foreach(Vector2 sample in sampler.Samples())
         {
             Instantiate(test, new Vector3(sample.x, 1f, sample.y), Quaternion.identity);
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        
     }
 }
 
@@ -34,11 +41,11 @@ public class PoissonDiscSampler
     /// radius: each sample will be at least `radius` units away from any other sample, and at most 2 * `radius`.
     public PoissonDiscSampler(float width, float height, float radius)
     {
-        rect = new Rect(1, 1, width, height);
+        rect = new Rect(0, 0, width, height);
         radius2 = radius * radius;
         cellSize = radius / Mathf.Sqrt(2);
-        grid = new Vector2[Mathf.CeilToInt(width / cellSize),
-                           Mathf.CeilToInt(height / cellSize)];
+        grid = new Vector2[Mathf.CeilToInt(height / cellSize),
+                           Mathf.CeilToInt(width / cellSize)];
     }
 
     /// Return a lazy sequence of samples. You typically want to call this in a foreach loop, like so:
