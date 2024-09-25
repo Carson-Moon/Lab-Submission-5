@@ -9,6 +9,8 @@ using UnityEngine.AI;
 public class Avoider : MonoBehaviour
 {
     public GameObject test;
+    public GameObject avoidee; // Game object to avoid.
+    public float range; // Range the avoider will maintain from the avoidee.
 
     private void Start()
     {
@@ -149,17 +151,33 @@ public class AvoiderEditor : Editor
 {
     public override void OnInspectorGUI()
     {
+        // Use the base layout of the avoider script.
         base.OnInspectorGUI();
 
-        NavMeshAgent agent = Selection.activeGameObject.GetComponent<NavMeshAgent>();
+        RequirementChecks();
+    }
 
-        if (agent == null)
+    // Requirements for avoider to work that are checked to ensure they are functioning.
+    private void RequirementChecks()
+    {
+        // If NavMeshAgent does not exist, throw a warning in the inspector.
+        if (Selection.activeGameObject.GetComponent<NavMeshAgent>() == null)
         {
             EditorGUILayout.HelpBox("Make object a Nav Mesh Agent and bake the mesh!", MessageType.Warning);
         }
 
+        // If the object to avoid has not been assigned, throw a warning that displays in the inspector.
+        if (Selection.activeGameObject.GetComponent<Avoider>().avoidee == null)
+        {
+            EditorGUILayout.HelpBox("Make sure you assign an object to avoid!", MessageType.Warning);
+        }
 
-
+        // If the range the avoider will maintain from the avoidee is less than or equal to 0, throw a warning,
+        // otherwise the avoider will not be avoiding.
+        if (Selection.activeGameObject.GetComponent<Avoider>().range <= 0)
+        {
+            EditorGUILayout.HelpBox("Assign a range that is above 0.", MessageType.Warning);
+        }
     }
 }
 #endif
