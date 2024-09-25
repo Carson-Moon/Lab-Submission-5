@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Schema;
 using Unity.VisualScripting.FullSerializer;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Avoider : MonoBehaviour
 {
@@ -140,3 +142,24 @@ public class PoissonDiscSampler
         }
     }
 }
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(Avoider)), CanEditMultipleObjects]
+public class AvoiderEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+
+        NavMeshAgent agent = Selection.activeGameObject.GetComponent<NavMeshAgent>();
+
+        if (agent == null)
+        {
+            EditorGUILayout.HelpBox("Make object a Nav Mesh Agent and bake the mesh!", MessageType.Warning);
+        }
+
+
+
+    }
+}
+#endif
