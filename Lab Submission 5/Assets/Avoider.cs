@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml.Schema;
+using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
 using UnityEditor;
 using UnityEngine;
@@ -8,23 +9,158 @@ using UnityEngine.AI;
 
 public class Avoider : MonoBehaviour
 {
-    public GameObject test;
-    public GameObject avoidee; // Game object to avoid.
-    public float range; // Range the avoider will maintain from the avoidee.
+    public bool canSeeUs = false;
+    public bool isHiding = false;
+    public NavMeshAgent agent;
+
+    public float range;
+
+    [Header("Avoidee Eye Contact")]
+    public Transform avoidee; // Game object to avoid.
+    public LayerMask checkMask;
+
+    [Header("Poisson Disc Samples")]
+    [SerializeField] List<Vector3> candidates = new List<Vector3>();
+    [SerializeField] List<Vector3> notValid = new List<Vector3>();
 
     private void Start()
     {
-        PoissonDiscSampler sampler = new PoissonDiscSampler(10, 10, 1f);
+        //CreatePoissonDisc();
+    }
 
+    private void Update() {
+
+        canSeeUs = CanAvoideeSeeUs(transform.position);
+        // Determine if the avoidee can see us.
+        if(canSeeUs && !isHiding)
+        {
+            CreatePoissonDisc();
+            isHiding = true;
+        }
+
+        if(!canSeeUs)
+        {
+            isHiding = false;
+        }
+    }
+
+    // Create and sort our poisson disc points!
+    private void CreatePoissonDisc(){
+        // Grab our current position.
+        Vector3 pos = transform.position;
+
+        // The width and height for the sampler.
+        float width = range;
+        float height = range;
+
+        // Get an offset to apply to our generated points. (This puts the avoider at the center of the samples.)
+        Vector2 centerOffset = new Vector2(width / 2f, height / 2f);
+
+        PoissonDiscSampler sampler = new PoissonDiscSampler(width, height, 1f);
+
+        // Create and store our sample points.
         foreach(Vector2 sample in sampler.Samples())
         {
-            Instantiate(test, new Vector3(sample.x, 1f, sample.y), Quaternion.identity);
+            // Shift our samples to respect our new center.
+            Vector2 centeredSample = sample - centerOffset;
+            Vector3 actualPos = new Vector3(centeredSample.x + pos.x, 1f, centeredSample.y + pos.z);
+
+            // Determine if this point is hidden from the avoidee.
+            if(CanAvoideeSeeUs(actualPos))
+            {
+                // Add this sample to not valid.
+                notValid.Add(actualPos);
+            }
+            else
+            {                
+                // Add this sample to candidates.
+                candidates.Add(actualPos);
+            }
         }
+
+        // Move to the closest candidate.
+        Vector3 newPos = ClosestCandidate();
+
+        // If our new position is 'null', restart the check!
+        if(newPos == Vector3.zero)
+        {
+            CreatePoissonDisc();
+        }
+        // If not, move to the new position!
+        else
+        {
+            print(newPos);
+            agent.destination = newPos;
+
+            // Clear our previous points.
+            candidates.Clear();
+            notValid.Clear();
+        }
+    }
+
+    // Find and return the closest candidate.
+    private Vector3 ClosestCandidate(){
+        if(candidates.Count == 0){
+            return Vector3.zero;
+        }
+
+        Vector3 closestPoint = Vector3.zero;
+        float closestDist = 999;
+        float dist;
+
+        // Loop through our candidates.
+        foreach(Vector3 point in candidates)
+        {
+            dist = Vector3.Distance(transform.position, point);
+            if(dist < closestDist)
+            {
+                closestPoint = point;
+                closestDist = dist;
+            }
+        }
+
+        return closestPoint;
+    }
+
+    // Determine if this point is hidden from the avoidee.
+    private bool CanAvoideeSeeUs(Vector3 point){
+        RaycastHit hit;
+
+        // Get direction from this point to the avoidee.
+        Vector3 dir = avoidee.position - point;
+
+        // Send a raycast in that direction.
+        if(Physics.Raycast(point, dir, out hit, 100, checkMask))
+        {
+            // If we hit the avoidee, return true.
+            if(hit.transform.gameObject.layer == 6) // Avoidee Layer
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void OnDrawGizmos()
     {
-        
+        Gizmos.color = Color.red;
+
+        // Eye contact.
+        Gizmos.DrawLine(transform.position, avoidee.position);
+
+        Gizmos.color = Color.green;
+
+        // Candidates
+        foreach(Vector3 candidate in candidates){
+            Gizmos.DrawLine(transform.position, candidate);
+        }
+
+        Gizmos.color = Color.red;
+
+        // Not Valid
+        foreach(Vector3 point in notValid){
+            Gizmos.DrawLine(transform.position, point);
+        }
     }
 }
 
