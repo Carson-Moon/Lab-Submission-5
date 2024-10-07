@@ -601,7 +601,7 @@ MonoBehaviour:
   canSeeUs: 0
   isHiding: 0
   agent: {fileID: 841561670}
-  range: 10
+  range: 14.73
   avoidee: {fileID: 15222532}
   checkMask:
     serializedVersion: 2

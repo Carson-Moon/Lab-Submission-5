@@ -6,6 +6,7 @@ using Unity.VisualScripting.FullSerializer;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
+using PoissonDisc;
 
 public class Avoider : MonoBehaviour
 {
@@ -28,7 +29,7 @@ public class Avoider : MonoBehaviour
         //CreatePoissonDisc();
     }
 
-    private void Update() {
+    private void FixedUpdate() {
 
         canSeeUs = CanAvoideeSeeUs(transform.position);
         // Determine if the avoidee can see us.
@@ -164,7 +165,7 @@ public class Avoider : MonoBehaviour
     }
 }
 
-public class PoissonDiscSampler
+/*public class PoissonDiscSampler
 {
     private const int k = 30;  // Maximum number of attempts before marking a sample as inactive.
 
@@ -279,7 +280,7 @@ public class PoissonDiscSampler
             y = (int)(sample.y / cellSize);
         }
     }
-}
+}*/
 
 #if UNITY_EDITOR
 [CustomEditor(typeof(Avoider)), CanEditMultipleObjects]
